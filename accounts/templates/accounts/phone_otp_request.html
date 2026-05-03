@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone OTP Login | Appointment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/otp.css' %}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <section class="auth-left">
+            <div class="auth-brand">AppointmentPro</div>
+            <h1>Phone OTP Login</h1>
+            <p>Get your OTP via SMS on the phone number linked to your account.</p>
+        </section>
+        <section class="auth-right">
+            <div class="auth-card">
+                <h2>Phone OTP Login</h2>
+                <p class="subtitle">Enter your registered phone number to receive an OTP via SMS</p>
+
+                {% if form.non_field_errors or messages %}
+                    <div class="error-banner flash-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="role-tabs" data-role-tabs>
+                    <button type="button" class="role-tab{% if form.role.value == 'customer' or not form.role.value %} active{% endif %}" data-role-value="customer">👤 Customer</button>
+                    <button type="button" class="role-tab{% if form.role.value == 'organizer' %} active{% endif %}" data-role-value="organizer">🗂 Organizer</button>
+                    <button type="button" class="role-tab{% if form.role.value == 'admin' %} active{% endif %}" data-role-value="admin">🛡 Admin</button>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form.role.as_hidden }}
+
+                    <div class="form-group">
+                        <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📱</span>
+                            {{ form.phone_number }}
+                        </div>
+                        <p class="helper-text">Include your country code (e.g. +91 for India, +1 for US)</p>
+                        {% for error in form.phone_number.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn-auth">Send OTP</button>
+                </form>
+
+                <p class="form-footer"><a href="/accounts/otp/" class="auth-link">← Back</a></p>
+            </div>
+        </section>
+    </div>
+    <script src="{% static 'accounts/js/auth.js' %}"></script>
+</body>
+</html>

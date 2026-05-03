@@ -1,0 +1,37 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h1>Reschedule Appointment</h1>
+    <div class="info-strip amber">⚠ You are rescheduling your booking for {{ booking.service.name }}. Current slot: {{ booking.slot.start_time }} - {{ booking.slot.end_time }}</div>
+    <h3>Select a New Time Slot</h3>
+
+    <form method="post" id="rescheduleForm">
+        {% csrf_token %}
+        <input type="hidden" name="new_slot" id="selected_slot">
+        <div class="form-group">
+            <label>New date</label>
+            <input type="date" name="appointment_date" value="{{ selected_date|date:'Y-m-d' }}" onchange="window.location='?date=' + this.value">
+        </div>
+        {% for row in slot_rows %}
+            <button type="button" class="slot-card" data-slot-id="{{ row.slot.id }}">
+                <span class="slot-time">{{ row.slot.start_time }} – {{ row.slot.end_time }}</span>
+                <span class="slot-spots spots-good">{{ row.spots_left }} left</span>
+            </button>
+        {% empty %}
+            <p>No slots currently available for this date.</p>
+        {% endfor %}
+        <button class="btn-primary btn-full" type="submit">Confirm Reschedule</button>
+        <a class="btn-outline btn-full" href="{% url 'booking_detail' booking.id %}">← Cancel, Go Back</a>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,149 @@
+.choice-cards {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.choice-card {
+    flex: 1;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    text-decoration: none;
+}
+
+.choice-card:hover {
+    border-color: #0D9488;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+}
+
+.choice-card .icon {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.choice-card h3 {
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 4px;
+}
+
+.choice-card p {
+    font-size: 13px;
+    color: #64748B;
+    margin-top: 4px;
+}
+
+.otp-divider {
+    text-align: center;
+    color: #94A3B8;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.helper-text {
+    margin-top: 6px;
+    color: #64748B;
+    font-size: 12px;
+}
+
+.otp-boxes {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 24px 0;
+}
+
+.otp-box {
+    width: 56px;
+    height: 64px;
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: "Nunito", sans-serif;
+    color: #1E293B;
+    transition: border-color 0.2s;
+    outline: none;
+}
+
+.otp-box:focus {
+    border-color: #0D9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.otp-box.filled {
+    border-color: #0D9488;
+    background: #F0FDFA;
+}
+
+.otp-timer {
+    text-align: center;
+    font-size: 13px;
+    color: #64748B;
+    margin-bottom: 16px;
+}
+
+.otp-timer span {
+    color: #0D9488;
+    font-weight: 700;
+}
+
+.resend-section {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #64748B;
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #0D9488;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    margin-top: 4px;
+}
+
+.resend-btn:disabled {
+    color: #94A3B8;
+    cursor: not-allowed;
+}
+
+.otp-inline-success {
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    color: #047857;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.otp-inline-error {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #DC2626;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.otp-alt-link {
+    margin-top: 14px;
+}
+
+@media (max-width: 768px) {
+    .choice-cards {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,76 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section detail-layout">
+    <div>
+        <p class="muted">Home > Services > {{ service.name }}</p>
+        <h1>{{ service.name }}</h1>
+        <p class="card-organizer">by {{ service.created_by.get_full_name|default:service.created_by.username }}</p>
+        <div class="badges-row">
+            <span class="badge badge-teal">⏱ {{ service.duration_minutes }} min</span>
+            <span class="badge badge-gray">{% if service.appointment_type == "one_to_one" %}👤 One-to-One{% elif service.appointment_type == "group" %}👥 Group{% else %}🔧 Resource{% endif %}</span>
+            <span class="badge {% if booking_rule and booking_rule.requires_manual_confirmation %}badge-amber{% else %}badge-green{% endif %}">
+                {% if booking_rule and booking_rule.requires_manual_confirmation %}⏳ Manual{% else %}✓ Instant{% endif %}
+            </span>
+        </div>
+        <p>{{ service.description }}</p>
+        {% if service.venue %}<p class="info-strip">Venue: {{ service.venue }}</p>{% endif %}
+
+        <h3>Working Hours</h3>
+        <table class="table">
+            <thead><tr><th>Day</th><th>Hours</th></tr></thead>
+            <tbody>
+                {% for wh in working_hours %}
+                    <tr><td>{{ wh.get_day_of_week_display|default:wh.day_of_week }}</td><td>{{ wh.start_time }} – {{ wh.end_time }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="2"><em>Closed</em></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>What's Included</h3>
+        {% if questions %}
+            <p>You'll be asked {{ questions|length }} question(s) at the time of booking.</p>
+            <ul>{% for q in questions %}<li>{{ q.question_text }}</li>{% endfor %}</ul>
+        {% else %}
+            <p>No pre-booking questions.</p>
+        {% endif %}
+
+        {% if service.appointment_type == "resource" %}
+            <h3>Resources Available</h3>
+            <div class="badges-row">{% for r in resources %}<span class="badge badge-gray">{{ r.name }}</span>{% endfor %}</div>
+        {% endif %}
+    </div>
+
+    <aside class="booking-sidebar">
+        <p>⏱ {{ service.duration_minutes }} minutes</p>
+        <p>{% if booking_rule and booking_rule.requires_manual_confirmation %}⏳ Awaiting Confirmation{% else %}✓ Instant Confirmation{% endif %}</p>
+        <form method="get" class="form-group">
+            <label>Check date</label>
+            <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+        </form>
+        <div class="slots-preview">
+            {% for row in available_slot_rows|slice:":3" %}
+                <span class="badge badge-teal">{{ row.slot.start_time }} · {{ row.spots_left }} left</span>
+            {% empty %}
+                <p class="muted">No slots currently available</p>
+            {% endfor %}
+        </div>
+        {% if available_slot_rows %}
+            <a class="btn-primary btn-full btn-lg" href="{% url 'book_service' service.id %}?date={{ selected_date|date:'Y-m-d' }}">Book Now</a>
+        {% else %}
+            <button class="btn-outline btn-full" disabled>No Slots Available</button>
+        {% endif %}
+        <p class="muted">Max {{ booking_rule.max_bookings_per_slot|default:1 }} booking(s) per slot</p>
+    </aside>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

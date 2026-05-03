@@ -1,0 +1,123 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section profile-layout">
+    <aside class="card profile-card">
+        {% if request.user.customer_profile.profile_picture %}
+            <img src="{{ request.user.customer_profile.profile_picture.url }}" alt="Profile" class="avatar-image" id="avatarPreview">
+        {% else %}
+            <div class="avatar-circle" id="avatarPreview">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+        {% endif %}
+        <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <p class="muted">{{ request.user.email }}</p>
+        <p class="muted">Member since: {{ request.user.date_joined|date:"M Y" }}</p>
+        <p class="muted">Phone: {{ request.user.customer_profile.phone_number|default:"-" }}</p>
+    </aside>
+
+    <div>
+        <article class="card">
+            <h2>Personal Information</h2>
+            <form method="post" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+                <div class="form-grid-2">
+                    <div class="form-group"><label>First Name</label>{{ user_form.first_name }}</div>
+                    <div class="form-group"><label>Last Name</label>{{ user_form.last_name }}</div>
+                    <div class="form-group full"><label>Email</label>{{ user_form.email }}</div>
+                    <div class="form-group"><label>Phone Number</label>{{ profile_form.phone_number }}</div>
+                    <div class="form-group"><label>Date of Birth</label>{{ profile_form.date_of_birth }}</div>
+                    <div class="form-group full"><label>Profile Picture</label>{{ profile_form.profile_picture }}</div>
+                </div>
+                <button class="btn-primary" type="submit">Save Changes</button>
+            </form>
+        </article>
+
+        <article class="card">
+            <div class="section-head">
+                <h3>Recent Bookings</h3>
+                <a href="{% url 'my_bookings' %}">View All Bookings →</a>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab-target="profileUpcoming">Upcoming</button>
+                <button class="tab-btn" data-tab-target="profilePast">Past</button>
+            </div>
+            <div id="profileUpcoming" class="tab-section">
+                <table class="table">
+                    <thead><tr><th>Service</th><th>Slot Time</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for booking in upcoming_bookings %}
+                            <tr><td>{{ booking.service.name }}</td><td>{{ booking.slot.start_time }}</td><td>{{ booking.get_status_display }}</td><td><a href="{% url 'booking_detail' booking.id %}">View</a></td></tr>
+                        {% empty %}
+                            <tr><td colspan="4">No upcoming bookings.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if is_paginated_upcoming %}
+                <nav aria-label="Page navigation" style="margin-top:1rem;">
+                    <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                        {% if upcoming_bookings.has_previous %}
+                        <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                        <li><a class="btn-outline" href="?page={{ upcoming_bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                        {% endif %}
+                        {% for num in paginator_upcoming.page_range %}
+                        {% if upcoming_bookings.number == num %}
+                        <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                        {% elif num > upcoming_bookings.number|add:'-3' and num < upcoming_bookings.number|add:'3' %}
+                        <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if upcoming_bookings.has_next %}
+                        <li><a class="btn-outline" href="?page={{ upcoming_bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                        <li><a class="btn-outline" href="?page={{ paginator_upcoming.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                    <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ upcoming_bookings.number }} of {{ paginator_upcoming.num_pages }} — {{ paginator_upcoming.count }} total records</p>
+                </nav>
+                {% endif %}
+            </div>
+            <div id="profilePast" class="tab-section hidden">
+                <table class="table">
+                    <thead><tr><th>Service</th><th>Slot Time</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for booking in past_bookings %}
+                            <tr><td>{{ booking.service.name }}</td><td>{{ booking.slot.start_time }}</td><td>{{ booking.get_status_display }}</td><td><a href="{% url 'booking_detail' booking.id %}">View</a></td></tr>
+                        {% empty %}
+                            <tr><td colspan="4">No past bookings.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if is_paginated_past %}
+                <nav aria-label="Page navigation" style="margin-top:1rem;">
+                    <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                        {% if past_bookings.has_previous %}
+                        <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                        <li><a class="btn-outline" href="?page={{ past_bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                        {% endif %}
+                        {% for num in paginator_past.page_range %}
+                        {% if past_bookings.number == num %}
+                        <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                        {% elif num > past_bookings.number|add:'-3' and num < past_bookings.number|add:'3' %}
+                        <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if past_bookings.has_next %}
+                        <li><a class="btn-outline" href="?page={{ past_bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                        <li><a class="btn-outline" href="?page={{ paginator_past.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                    <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ past_bookings.number }} of {{ paginator_past.num_pages }} — {{ paginator_past.count }} total records</p>
+                </nav>
+                {% endif %}
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

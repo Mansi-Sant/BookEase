@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel | BookEase</title>
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+</head>
+<body class="admin-shell">
+    <header class="admin-topbar">
+        <div>
+            <strong>BookEase Control Panel</strong>
+            <span>System monitoring and role management</span>
+        </div>
+        <form method="post" action="/accounts/logout/">
+            {% csrf_token %}
+            <button class="btn-auth btn-small" type="submit">Logout</button>
+        </form>
+    </header>
+
+    <main class="admin-main">
+        {% for message in messages %}
+            <div class="error-banner">{{ message }}</div>
+        {% endfor %}
+
+        <section class="admin-metrics">
+            <article><span>Total Users</span><strong>{{ stats.total_users }}</strong></article>
+            <article><span>Providers</span><strong>{{ stats.organizers }}</strong></article>
+            <article><span>Appointments</span><strong>{{ stats.total_bookings }}</strong></article>
+            <article><span>Booked Capacity</span><strong>{{ booking_capacity }}</strong></article>
+            <article><span>Published Services</span><strong>{{ stats.published_services }}</strong></article>
+            <article><span>Resources</span><strong>{{ stats.total_resources }}</strong></article>
+        </section>
+
+        <section class="admin-section">
+            <div class="section-row">
+                <h1>User & Provider Management</h1>
+                <form method="get">
+                    <select name="role" onchange="this.form.submit()">
+                        <option value="">All roles</option>
+                        <option value="customer" {% if selected_role == "customer" %}selected{% endif %}>Customers</option>
+                        <option value="organizer" {% if selected_role == "organizer" %}selected{% endif %}>Organizers</option>
+                        <option value="admin" {% if selected_role == "admin" %}selected{% endif %}>Admins</option>
+                    </select>
+                </form>
+            </div>
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for user_obj in users %}
+                            <tr>
+                                <td>{{ user_obj.get_full_name|default:user_obj.username }}</td>
+                                <td>{{ user_obj.email }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'control_panel_update_user' user_obj.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="role">
+                                        <select name="role" onchange="this.form.submit()">
+                                            <option value="customer" {% if user_obj.role_profile.role == "customer" %}selected{% endif %}>Customer</option>
+                                            <option value="organizer" {% if user_obj.role_profile.role == "organizer" %}selected{% endif %}>Organizer</option>
+                                            <option value="admin" {% if user_obj.role_profile.role == "admin" or user_obj.is_superuser %}selected{% endif %}>Admin</option>
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>{% if user_obj.is_active %}Active{% else %}Inactive{% endif %}</td>
+                                <td>
+                                    <form method="post" action="{% url 'control_panel_update_user' user_obj.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="toggle_active">
+                                        <button class="link-button" type="submit">{% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5">No users found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if is_paginated_users %}
+            <nav aria-label="Page navigation" style="margin-top:1rem;">
+                <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                    {% if users.has_previous %}
+                    <li><a class="link-button" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                    <li><a class="link-button" href="?page={{ users.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                    {% endif %}
+                    {% for num in paginator_users.page_range %}
+                    {% if users.number == num %}
+                    <li><span class="link-button" style="pointer-events:none;opacity:0.8;">{{ num }}</span></li>
+                    {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+                    <li><a class="link-button" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if users.has_next %}
+                    <li><a class="link-button" href="?page={{ users.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                    <li><a class="link-button" href="?page={{ paginator_users.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+                <p style="text-align:center;opacity:0.75;font-size:0.85rem;margin-top:0.5rem;">
+                    Page {{ users.number }} of {{ paginator_users.num_pages }} — {{ paginator_users.count }} total records
+                </p>
+            </nav>
+            {% endif %}
+        </section>
+
+        <section class="admin-grid">
+            <div class="admin-section">
+                <h2>Recent Services</h2>
+                <ul class="admin-list">
+                    {% for service in services %}
+                        <li><strong>{{ service.name }}</strong><span>{{ service.created_by.get_full_name|default:service.created_by.email }} · {% if service.is_published %}Published{% else %}Draft{% endif %}</span></li>
+                    {% empty %}
+                        <li>No services yet.</li>
+                    {% endfor %}
+                </ul>
+                {% if is_paginated_services %}
+                <nav aria-label="Page navigation" style="margin-top:1rem;">
+                    <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                        {% if services.has_previous %}
+                        <li><a class="link-button" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                        <li><a class="link-button" href="?page={{ services.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                        {% endif %}
+                        {% for num in paginator_services.page_range %}
+                        {% if services.number == num %}
+                        <li><span class="link-button" style="pointer-events:none;opacity:0.8;">{{ num }}</span></li>
+                        {% elif num > services.number|add:'-3' and num < services.number|add:'3' %}
+                        <li><a class="link-button" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if services.has_next %}
+                        <li><a class="link-button" href="?page={{ services.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                        <li><a class="link-button" href="?page={{ paginator_services.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                    <p style="text-align:center;opacity:0.75;font-size:0.85rem;margin-top:0.5rem;">
+                        Page {{ services.number }} of {{ paginator_services.num_pages }} — {{ paginator_services.count }} total records
+                    </p>
+                </nav>
+                {% endif %}
+            </div>
+            <div class="admin-section">
+                <h2>Latest Bookings</h2>
+                <ul class="admin-list">
+                    {% for booking in bookings %}
+                        <li><strong>{{ booking.service.name }}</strong><span>{{ booking.customer.get_full_name|default:booking.customer.email }} · {{ booking.status }}</span></li>
+                    {% empty %}
+                        <li>No bookings yet.</li>
+                    {% endfor %}
+                </ul>
+                {% if is_paginated_bookings %}
+                <nav aria-label="Page navigation" style="margin-top:1rem;">
+                    <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                        {% if bookings.has_previous %}
+                        <li><a class="link-button" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                        <li><a class="link-button" href="?page={{ bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                        {% endif %}
+                        {% for num in paginator_bookings.page_range %}
+                        {% if bookings.number == num %}
+                        <li><span class="link-button" style="pointer-events:none;opacity:0.8;">{{ num }}</span></li>
+                        {% elif num > bookings.number|add:'-3' and num < bookings.number|add:'3' %}
+                        <li><a class="link-button" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if bookings.has_next %}
+                        <li><a class="link-button" href="?page={{ bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                        <li><a class="link-button" href="?page={{ paginator_bookings.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                    <p style="text-align:center;opacity:0.75;font-size:0.85rem;margin-top:0.5rem;">
+                        Page {{ bookings.number }} of {{ paginator_bookings.num_pages }} — {{ paginator_bookings.count }} total records
+                    </p>
+                </nav>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

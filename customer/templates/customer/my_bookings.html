@@ -1,0 +1,113 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h1>My Bookings</h1>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab-target="upcomingTab">Upcoming ({{ paginator_upcoming.count }})</button>
+        <button class="tab-btn" data-tab-target="pastTab">Past ({{ paginator_past.count }})</button>
+    </div>
+
+    <div id="upcomingTab" class="tab-section">
+        {% if upcoming %}
+            {% for booking in upcoming %}
+                <article class="booking-card {% if booking.status == 'pending' %}pending{% endif %}" data-status="{{ booking.status }}">
+                    <h3 class="service-name">{{ booking.service.name }}</h3>
+                    <p class="slot-info">⏰ {{ booking.display_date }} · {{ booking.slot.start_time }} | ⏱ {{ booking.service.duration_minutes }} min</p>
+                    <p class="slot-info">Capacity: {{ booking.party_size }}</p>
+                    <p class="slot-info">👤 Provider: {{ booking.service.created_by.get_full_name|default:booking.service.created_by.username }}</p>
+                    <span class="badge {% if booking.status == 'confirmed' %}badge-green{% elif booking.status == 'pending' %}badge-amber{% else %}badge-gray{% endif %}">
+                        {{ booking.get_status_display }}
+                    </span>
+                    <div class="actions">
+                        <a class="btn-outline" href="{% url 'booking_detail' booking.id %}">View Details</a>
+                        <a class="btn-outline" href="{% url 'reschedule_booking' booking.id %}">Reschedule</a>
+                        <button class="btn-danger-outline btn-outline cancel-toggle-btn" type="button">Cancel</button>
+                    </div>
+                    <div class="inline-confirm">
+                        <p>Cancel this booking?</p>
+                        <form method="post" action="{% url 'cancel_booking' booking.id %}">
+                            {% csrf_token %}
+                            <button class="btn-danger-outline btn-outline" type="submit">Yes, Cancel</button>
+                            <button class="btn-outline keep-booking-btn" type="button">Keep It</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+            {% if is_paginated_upcoming %}
+            <nav aria-label="Page navigation" style="margin-top:1rem;">
+                <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                    {% if upcoming.has_previous %}
+                    <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                    <li><a class="btn-outline" href="?page={{ upcoming.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                    {% endif %}
+                    {% for num in paginator_upcoming.page_range %}
+                    {% if upcoming.number == num %}
+                    <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                    {% elif num > upcoming.number|add:'-3' and num < upcoming.number|add:'3' %}
+                    <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if upcoming.has_next %}
+                    <li><a class="btn-outline" href="?page={{ upcoming.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                    <li><a class="btn-outline" href="?page={{ paginator_upcoming.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+                <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ upcoming.number }} of {{ paginator_upcoming.num_pages }} — {{ paginator_upcoming.count }} total records</p>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-soft">📅 No upcoming appointments. Book one now! <a href="{% url 'customer_service_list' %}">Browse Services</a></div>
+        {% endif %}
+    </div>
+
+    <div id="pastTab" class="tab-section hidden">
+        {% if past %}
+            {% for booking in past %}
+                <article class="booking-card cancelled" data-status="{{ booking.status }}">
+                    <h3 class="service-name">{{ booking.service.name }}</h3>
+                    <p class="slot-info">{{ booking.display_date }} · {{ booking.slot.start_time }}</p>
+                    <span class="badge badge-gray">{{ booking.get_status_display }}</span>
+                    <div class="actions">
+                        <a class="btn-outline" href="{% url 'booking_detail' booking.id %}">View Details</a>
+                        <a class="btn-outline" href="{% url 'customer_service_detail' booking.service.id %}">Book Again</a>
+                    </div>
+                </article>
+            {% endfor %}
+            {% if is_paginated_past %}
+            <nav aria-label="Page navigation" style="margin-top:1rem;">
+                <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                    {% if past.has_previous %}
+                    <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                    <li><a class="btn-outline" href="?page={{ past.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                    {% endif %}
+                    {% for num in paginator_past.page_range %}
+                    {% if past.number == num %}
+                    <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                    {% elif num > past.number|add:'-3' and num < past.number|add:'3' %}
+                    <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if past.has_next %}
+                    <li><a class="btn-outline" href="?page={{ past.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                    <li><a class="btn-outline" href="?page={{ paginator_past.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+                <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ past.number }} of {{ paginator_past.num_pages }} — {{ paginator_past.count }} total records</p>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-soft">No past bookings yet.</div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

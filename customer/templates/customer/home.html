@@ -1,0 +1,109 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Book Your Next Appointment</h1>
+    <p>Discover services and book in just a few clicks.</p>
+    <a class="btn-hero" href="{% url 'customer_service_list' %}">Browse Services →</a>
+</section>
+
+<section class="stats-row section">
+    <article class="stat-card"><h3>{{ total_services }}</h3><p>Total Services Available</p></article>
+    <article class="stat-card"><h3>{{ paginator_upcoming.count }}</h3><p>Your Upcoming Bookings</p></article>
+    <article class="stat-card"><h3>{{ services_this_week }}</h3><p>Services This Week</p></article>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2>Your Upcoming Appointments</h2>
+        <a href="{% url 'my_bookings' %}">View All Bookings →</a>
+    </div>
+    {% if upcoming_bookings %}
+        <div class="booking-scroll">
+            {% for booking in upcoming_bookings %}
+                <article class="booking-mini-card">
+                    <h4>{{ booking.service.name }}</h4>
+                    <p>{{ booking.slot.start_time }}</p>
+                    <span class="badge {% if booking.status == 'confirmed' %}badge-green{% else %}badge-amber{% endif %}">{{ booking.get_status_display }}</span>
+                    <a class="btn-outline" href="{% url 'booking_detail' booking.id %}">View</a>
+                </article>
+            {% endfor %}
+        </div>
+        {% if is_paginated_upcoming %}
+        <nav aria-label="Page navigation" style="margin-top:1rem;">
+            <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                {% if upcoming_bookings.has_previous %}
+                <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                <li><a class="btn-outline" href="?page={{ upcoming_bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                {% endif %}
+                {% for num in paginator_upcoming.page_range %}
+                {% if upcoming_bookings.number == num %}
+                <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                {% elif num > upcoming_bookings.number|add:'-3' and num < upcoming_bookings.number|add:'3' %}
+                <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if upcoming_bookings.has_next %}
+                <li><a class="btn-outline" href="?page={{ upcoming_bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                <li><a class="btn-outline" href="?page={{ paginator_upcoming.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+            <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ upcoming_bookings.number }} of {{ paginator_upcoming.num_pages }} — {{ paginator_upcoming.count }} total records</p>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="empty-soft">No upcoming appointments. Book one now!</div>
+    {% endif %}
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2>Available Services</h2>
+    </div>
+    <div class="service-grid">
+        {% for service in featured_services %}
+            <article class="service-card">
+                <div class="card-strip"></div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ service.name }}</h3>
+                    <p class="card-organizer">by {{ service.created_by.first_name|default:service.created_by.username }}</p>
+                    <p class="card-desc">{{ service.description }}</p>
+                    <a class="btn-primary btn-full" href="{% url 'customer_service_detail' service.id %}">View & Book</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+    {% if is_paginated_featured %}
+    <nav aria-label="Page navigation" style="margin-top:1rem;">
+        <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {% if featured_services.has_previous %}
+            <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+            <li><a class="btn-outline" href="?page={{ featured_services.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in paginator_featured.page_range %}
+            {% if featured_services.number == num %}
+            <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+            {% elif num > featured_services.number|add:'-3' and num < featured_services.number|add:'3' %}
+            <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if featured_services.has_next %}
+            <li><a class="btn-outline" href="?page={{ featured_services.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+            <li><a class="btn-outline" href="?page={{ paginator_featured.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+        <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ featured_services.number }} of {{ paginator_featured.num_pages }} — {{ paginator_featured.count }} total records</p>
+    </nav>
+    {% endif %}
+    <div class="center-actions"><a class="btn-outline" href="{% url 'customer_service_list' %}">View All Services →</a></div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

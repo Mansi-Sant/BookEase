@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Appointment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <section class="auth-left">
+            <div class="auth-brand">AppointmentPro</div>
+            <h1>Join us and start scheduling smarter.</h1>
+            <p>Create your account and start booking or publishing appointments.</p>
+        </section>
+        <section class="auth-right">
+            <div class="auth-card">
+                <h2>Create Account</h2>
+                <p class="subtitle">No OTP, no setup maze. Just the essentials.</p>
+
+                {% if form.non_field_errors or messages %}
+                    <div class="error-banner flash-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="role-tabs" data-role-tabs>
+                    <button type="button" class="role-tab{% if form.role.value == 'customer' or not form.role.value %} active{% endif %}" data-role-value="customer">👤 Customer</button>
+                    <button type="button" class="role-tab{% if form.role.value == 'organizer' %} active{% endif %}" data-role-value="organizer">🗂 Organizer</button>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form.role.as_hidden }}
+
+                    <div class="form-group">
+                        <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">👤</span>
+                            {{ form.full_name }}
+                        </div>
+                        {% for error in form.full_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">Email</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">✉</span>
+                            {{ form.email }}
+                        </div>
+                        {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password1.id_for_label }}">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            {{ form.password1 }}
+                            <button type="button" class="toggle-password" data-target="{{ form.password1.id_for_label }}">👁</button>
+                        </div>
+                        <div class="strength-row">
+                            <div class="password-strength" id="passwordStrength"></div>
+                            <span id="passwordStrengthText">Weak</span>
+                        </div>
+                        {% for error in form.password1.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            {{ form.password2 }}
+                            <button type="button" class="toggle-password" data-target="{{ form.password2.id_for_label }}">👁</button>
+                        </div>
+                        {% for error in form.password2.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn-auth">Create Account</button>
+                </form>
+
+                <p class="form-footer">Already have an account? <a href="/accounts/login/" class="auth-link">Sign In</a></p>
+            </div>
+        </section>
+    </div>
+    <script src="{% static 'accounts/js/auth.js' %}"></script>
+</body>
+</html>

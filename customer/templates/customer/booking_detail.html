@@ -1,0 +1,69 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section detail-layout">
+    <div>
+        <p class="muted">My Bookings > Booking #{{ booking.id }}</p>
+        <article class="card">
+            <div class="section-head">
+                <h1>{{ booking.service.name }}</h1>
+                <span class="badge {% if booking.status == 'confirmed' %}badge-green{% elif booking.status == 'pending' %}badge-amber{% elif booking.status == 'cancelled' %}badge-gray{% else %}badge-teal{% endif %}">{{ booking.get_status_display }}</span>
+            </div>
+            <p>Provider: {{ booking.service.created_by.get_full_name|default:booking.service.created_by.username }}</p>
+            <p>Date/Time: {{ booking.display_date }} {{ booking.slot.start_time }} - {{ booking.slot.end_time }}</p>
+            <p>Capacity: {{ booking.party_size }}</p>
+            <p>Resource: {{ booking.assigned_resource.name|default:"Any available" }}</p>
+            <p>Venue: {{ booking.service.venue|default:"Shared by organizer" }}</p>
+            <p>Duration: {{ booking.service.duration_minutes }} min</p>
+            <p class="muted">Booking ID #{{ booking.id }} • Booked on {{ booking.booked_at }}</p>
+            {% if booking.rescheduled_slot %}
+                <div class="info-strip amber">Rescheduled from {{ booking.rescheduled_slot.start_time }} - {{ booking.rescheduled_slot.end_time }}</div>
+            {% endif %}
+        </article>
+
+        {% if answers %}
+            <article class="card">
+                <h3>Your Booking Details</h3>
+                {% for answer in answers %}
+                    <div class="answer-row">
+                        <div class="answer-question">{{ answer.question.question_text }}</div>
+                        <div class="answer-text">{{ answer.answer_text }}</div>
+                    </div>
+                {% endfor %}
+            </article>
+        {% endif %}
+
+        {% if booking.notes %}
+            <article class="card">
+                <h3>Special Requests</h3>
+                <p>{{ booking.notes }}</p>
+            </article>
+        {% endif %}
+    </div>
+
+    <aside class="booking-sidebar">
+        {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+            <a class="btn-outline btn-full" href="{% url 'reschedule_booking' booking.id %}">Reschedule</a>
+            <button type="button" class="btn-danger-outline btn-outline btn-full cancel-toggle-btn">Cancel Booking</button>
+            <div class="inline-confirm">
+                <p>Are you sure? This cannot be undone.</p>
+                <form method="post" action="{% url 'cancel_booking' booking.id %}">
+                    {% csrf_token %}
+                    <button class="btn-danger-outline btn-outline btn-full" type="submit">Cancel Booking</button>
+                    <button class="btn-outline btn-full keep-booking-btn" type="button">Go Back</button>
+                </form>
+            </div>
+        {% endif %}
+        <a class="btn-outline btn-full" href="{% url 'my_bookings' %}">Back to My Bookings</a>
+    </aside>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

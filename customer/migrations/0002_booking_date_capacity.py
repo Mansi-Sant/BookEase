@@ -1,0 +1,21 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("customer", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="booking",
+            name="appointment_date",
+            field=models.DateField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name="booking",
+            name="party_size",
+            field=models.PositiveIntegerField(default=1),
+        ),
+    ]

@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login with OTP | Appointment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/otp.css' %}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <section class="auth-left">
+            <div class="auth-brand">AppointmentPro</div>
+            <h1>Secure access with one-time password.</h1>
+            <p>Choose email or phone-based OTP and verify your identity safely.</p>
+        </section>
+        <section class="auth-right">
+            <div class="auth-card otp-choice-card">
+                <h2>Login with OTP</h2>
+                <p class="subtitle">Choose how you want to receive your OTP</p>
+
+                {% if messages %}
+                    <div class="error-banner flash-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="choice-cards">
+                    <a href="/accounts/otp/email/" class="choice-card">
+                        <span class="icon">📧</span>
+                        <h3>Email OTP</h3>
+                        <p>Receive OTP on your registered email</p>
+                    </a>
+                    <a href="/accounts/otp/phone/" class="choice-card">
+                        <span class="icon">📱</span>
+                        <h3>Phone OTP</h3>
+                        <p>Receive OTP via SMS on your phone</p>
+                    </a>
+                </div>
+
+                <div class="otp-divider">or</div>
+                <p class="form-footer"><a href="/accounts/login/" class="auth-link">← Back to Password Login</a></p>
+            </div>
+        </section>
+    </div>
+    <script src="{% static 'accounts/js/auth.js' %}"></script>
+</body>
+</html>

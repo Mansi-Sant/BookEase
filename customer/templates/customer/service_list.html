@@ -1,0 +1,89 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h1>Browse Services</h1>
+    <form method="get" class="filter-bar">
+        <input type="text" name="search" value="{{ search }}" placeholder="Search services...">
+        <select name="duration">
+            <option value="">All Durations</option>
+            <option value="15" {% if duration == "15" %}selected{% endif %}>15 min</option>
+            <option value="30" {% if duration == "30" %}selected{% endif %}>30 min</option>
+            <option value="45" {% if duration == "45" %}selected{% endif %}>45 min</option>
+            <option value="60" {% if duration == "60" %}selected{% endif %}>60 min</option>
+            <option value="90" {% if duration == "90" %}selected{% endif %}>90 min</option>
+            <option value="120" {% if duration == "120" %}selected{% endif %}>120 min</option>
+        </select>
+        <select name="type">
+            <option value="">All Types</option>
+            <option value="one_to_one" {% if type == "one_to_one" %}selected{% endif %}>One-to-One</option>
+            <option value="group" {% if type == "group" %}selected{% endif %}>Group</option>
+            <option value="resource" {% if type == "resource" %}selected{% endif %}>Resource-based</option>
+        </select>
+        <button class="btn-primary" type="submit">Search</button>
+        <a class="btn-outline" href="{% url 'customer_service_list' %}">Clear</a>
+    </form>
+    <p class="muted">Showing {{ paginator.count }} services</p>
+
+    {% if services %}
+        <div class="service-grid">
+            {% for service in services %}
+                <article class="service-card">
+                    <div class="card-strip"></div>
+                    <div class="card-body">
+                        <h3 class="card-title">{{ service.name }}</h3>
+                        <p class="card-organizer">by {{ service.created_by.first_name|default:service.created_by.username }}</p>
+                        <div class="badges-row">
+                            <span class="badge badge-teal">⏱ {{ service.duration_minutes }} min</span>
+                            <span class="badge badge-gray">
+                                {% if service.appointment_type == "one_to_one" %}👤 One-to-One{% elif service.appointment_type == "group" %}👥 Group{% else %}🔧 Resource{% endif %}
+                            </span>
+                        </div>
+                        <p class="card-desc">{{ service.description }}</p>
+                        <p class="card-organizer">Working days: {{ service.working_hours.count }}</p>
+                        <a class="btn-primary btn-full" href="{% url 'customer_service_detail' service.id %}">View & Book →</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+        {% if is_paginated %}
+        <nav aria-label="Page navigation" style="margin-top:1.5rem;">
+            <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+                {% if services.has_previous %}
+                <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+                <li><a class="btn-outline" href="?page={{ services.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+                {% endif %}
+                {% for num in paginator.page_range %}
+                {% if services.number == num %}
+                <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+                {% elif num > services.number|add:'-3' and num < services.number|add:'3' %}
+                <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if services.has_next %}
+                <li><a class="btn-outline" href="?page={{ services.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+                <li><a class="btn-outline" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+            <p class="muted" style="text-align:center;font-size:0.85rem;margin-top:0.5rem;">Page {{ services.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records</p>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="emoji">🔍</div>
+            <h3>No services found</h3>
+            <p>Try a different search.</p>
+            <a class="btn-outline" href="{% url 'customer_service_list' %}">Clear Filters</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

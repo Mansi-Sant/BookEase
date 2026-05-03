@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="navbar">
+        <a class="nav-brand" href="{% url 'customer_home' %}">BookEase</a>
+        <button class="nav-hamburger" id="navHamburger" type="button">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a class="nav-link" href="{% url 'customer_home' %}">Home</a></li>
+            <li><a class="nav-link" href="{% url 'customer_service_list' %}">Browse Services</a></li>
+            <li><a class="nav-link" href="{% url 'my_bookings' %}">My Bookings</a></li>
+        </ul>
+        <div class="nav-profile">
+            <button class="nav-avatar" id="avatarBtn" type="button">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</button>
+            <div class="avatar-dropdown" id="avatarDropdown">
+                <a href="{% url 'customer_profile' %}">My Profile</a>
+                <form method="post" action="/accounts/logout/">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <div class="flash-wrap">
+        {% for message in messages %}
+            <div class="flash {% if message.tags == 'success' %}flash-success{% else %}flash-error{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">© 2026 BookEase. All rights reserved.</footer>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

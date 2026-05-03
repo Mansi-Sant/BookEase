@@ -1,0 +1,118 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h1>Book — {{ service.name }}</h1>
+    <div class="info-strip">by {{ service.created_by.get_full_name|default:service.created_by.username }}</div>
+
+    <div class="stepper">
+        <div class="step-item active" data-step-indicator="1"><div class="step-circle">1</div><div class="step-label">Select Slot</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item" data-step-indicator="2"><div class="step-circle">2</div><div class="step-label">Your Details</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item" data-step-indicator="3"><div class="step-circle">3</div><div class="step-label">Confirm</div></div>
+    </div>
+
+    <form method="post" id="bookingForm">
+        {% csrf_token %}
+        <input type="hidden" name="slot" id="selected_slot" value="{{ selected_slot_id|default:'' }}">
+        {# Date must stay outside step panels so it is always submitted with the final POST (step 3). #}
+        <div class="form-group booking-date-field">
+            <label for="id_appointment_date">Appointment date</label>
+            <input
+                type="date"
+                id="id_appointment_date"
+                name="appointment_date"
+                value="{{ selected_date|date:'Y-m-d' }}"
+                onchange="window.location='?date=' + this.value"
+            >
+        </div>
+
+        <div class="step-section" data-step="1">
+            <h3>Choose date and time</h3>
+            <p class="muted">Use the date above, then pick a slot below.</p>
+            <p class="field-error" id="slotError"></p>
+            {% for row in slot_rows %}
+                <button type="button" class="slot-card {% if selected_slot_id == row.slot.id %}selected{% endif %}" data-slot-id="{{ row.slot.id }}" data-slot-label="{{ selected_date }} · {{ row.slot.start_time }} - {{ row.slot.end_time }}">
+                    <span class="slot-time">{{ row.slot.start_time }} – {{ row.slot.end_time }}</span>
+                    <span class="slot-spots spots-good">{{ row.spots_left }} left</span>
+                </button>
+            {% empty %}
+                <div class="empty-soft">No available slots for this date.</div>
+            {% endfor %}
+            <div class="step-actions">
+                <span></span>
+                <button type="button" class="btn-primary" id="nextStep1" {% if not slot_rows %}disabled{% endif %}>Next →</button>
+            </div>
+        </div>
+
+        <div class="step-section hidden" data-step="2" data-has-questions="{% if questions or resources or booking_rule.manage_capacity %}1{% else %}0{% endif %}">
+            <h3>A few quick questions</h3>
+            {% for question in questions %}
+                <div class="form-group">
+                    <label>{{ question.question_text }} {% if question.is_required %}<span class="text-danger">*</span>{% endif %}</label>
+                    <textarea name="question_{{ question.id }}" rows="3"></textarea>
+                </div>
+            {% empty %}
+                <p class="muted">No questions for this service.</p>
+            {% endfor %}
+            {% if booking_rule and booking_rule.manage_capacity %}
+                <div class="form-group">
+                    <label>Capacity / party size</label>
+                    {% if booking_rule.max_bookings_per_slot %}
+                        <input type="number" name="party_size" min="1" max="{{ booking_rule.max_bookings_per_slot }}" value="{{ party_size|default:1 }}">
+                    {% else %}
+                        <input type="number" name="party_size" min="1" value="{{ party_size|default:1 }}">
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if resources %}
+                <div class="form-group">
+                    <label>Preferred resource</label>
+                    <select name="resource">
+                        <option value="">Any available</option>
+                        {% for resource in resources %}
+                            <option value="{{ resource.id }}">{{ resource.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            <div class="step-actions">
+                <button type="button" class="btn-outline" id="backStep2">← Back</button>
+                <button type="button" class="btn-primary" id="nextStep2">Next →</button>
+            </div>
+        </div>
+
+        <div class="step-section hidden" data-step="3">
+            <h3>Review and confirm</h3>
+            <div class="summary-card">
+                <div class="summary-row"><span class="summary-label">Service</span><span class="summary-value">{{ service.name }}</span></div>
+                <div class="summary-row"><span class="summary-label">Organizer</span><span class="summary-value">{{ service.created_by.get_full_name|default:service.created_by.username }}</span></div>
+                <div class="summary-row"><span class="summary-label">Slot</span><span class="summary-value" id="selectedSlotSummary">-</span></div>
+                <div class="summary-row"><span class="summary-label">Duration</span><span class="summary-value">{{ service.duration_minutes }} min</span></div>
+                <div class="summary-row"><span class="summary-label">Venue</span><span class="summary-value">{{ service.venue|default:"Shared by organizer" }}</span></div>
+                {% if booking_rule and booking_rule.advance_payment_enabled %}
+                    <div class="summary-row"><span class="summary-label">Payment</span><span class="summary-value">Advance payment required outside this demo</span></div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label>Anything you'd like the organizer to know? (optional)</label>
+                <textarea name="notes" rows="3">{{ notes_payload }}</textarea>
+            </div>
+            <div class="step-actions">
+                <button type="button" class="btn-outline" id="backStep3">← Back</button>
+                <button type="submit" class="btn-primary btn-full btn-lg">✓ Confirm Booking</button>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

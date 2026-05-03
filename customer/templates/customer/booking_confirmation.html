@@ -1,0 +1,41 @@
+{% extends "customer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'customer/css/customer.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section center-wrap">
+    <article class="confirm-card">
+        <div class="success-circle">✅</div>
+        <h1 class="{% if booking.status == 'confirmed' %}text-success{% else %}text-amber{% endif %}">
+            {% if booking.status == 'confirmed' %}Booking Confirmed!{% else %}Booking Submitted!{% endif %}
+        </h1>
+        <p>{% if booking.status == 'pending' %}Awaiting organizer confirmation{% else %}A summary of your appointment is below.{% endif %}</p>
+        <div class="summary-card">
+            <div class="summary-row"><span class="summary-label">Service</span><span class="summary-value">{{ booking.service.name }}</span></div>
+            <div class="summary-row"><span class="summary-label">Provider</span><span class="summary-value">{{ booking.service.created_by.get_full_name|default:booking.service.created_by.username }}</span></div>
+            <div class="summary-row"><span class="summary-label">Date</span><span class="summary-value">{{ booking.display_date }}</span></div>
+            <div class="summary-row"><span class="summary-label">Time</span><span class="summary-value">{{ booking.slot.start_time }} - {{ booking.slot.end_time }}</span></div>
+            <div class="summary-row"><span class="summary-label">Capacity</span><span class="summary-value">{{ booking.party_size }}</span></div>
+            <div class="summary-row"><span class="summary-label">Resource</span><span class="summary-value">{{ booking.assigned_resource.name|default:"Any available" }}</span></div>
+            <div class="summary-row"><span class="summary-label">Duration</span><span class="summary-value">{{ booking.service.duration_minutes }} min</span></div>
+            <div class="summary-row"><span class="summary-label">Venue</span><span class="summary-value">{{ booking.service.venue|default:"Shared by organizer" }}</span></div>
+            <div class="summary-row"><span class="summary-label">Status</span><span class="summary-value">{{ booking.get_status_display }}</span></div>
+            {% if booking.reference_code %}
+            <div class="summary-row"><span class="summary-label">Reference code</span><span class="summary-value"><strong>{{ booking.reference_code }}</strong> <span class="muted">(from your username + role)</span></span></div>
+            {% endif %}
+            <div class="summary-row"><span class="summary-label">Booking ID</span><span class="summary-value">#{{ booking.id }}</span></div>
+        </div>
+        <div class="actions center-actions">
+            <a class="btn-primary" href="{% url 'my_bookings' %}">View My Bookings</a>
+            <a class="btn-outline" href="{% url 'customer_service_list' %}">Book Another Service</a>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'customer/js/customer.js' %}"></script>
+{% endblock %}

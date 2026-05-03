@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email | Appointment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}">
+    <style>
+        .otp-boxes { display: flex; gap: 10px; margin: 18px 0 14px; justify-content: center; }
+        .otp-box {
+            width: 52px; height: 60px; border: 2px solid #E5E7EB; border-radius: 10px;
+            font-size: 22px; font-weight: 700; text-align: center; outline: none;
+        }
+        .otp-box:focus { border-color: #0D9488; }
+        .otp-box.filled { border-color: #0D9488; background: #F0FDFA; }
+        .otp-timer { text-align: center; color: #4B5563; margin: 8px 0 14px; font-weight: 500; }
+        .error-banner { margin-bottom: 14px; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 12px; background: #FEF2F2; color: #991B1B; }
+        .resend-section { margin-top: 14px; text-align: center; color: #4B5563; }
+        .resend-btn { border: none; background: transparent; color: #0D9488; font-weight: 700; cursor: pointer; }
+        .resend-btn:disabled { color: #9CA3AF; cursor: not-allowed; }
+        .back-link { display: inline-block; margin-top: 12px; color: #0D9488; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <section class="auth-left">
+            <div class="auth-brand">AppointmentPro</div>
+            <h1>Secure your signup with OTP.</h1>
+            <p>Enter the code we just sent to confirm your email and finish registration.</p>
+        </section>
+        <section class="auth-right">
+            <div class="auth-card">
+                <h2 style="font-family: Nunito, sans-serif; font-weight: 800; font-size: 26px;">Verify Your Email</h2>
+                <p class="subtitle">We sent a 6-digit code to {{ masked_identifier }}</p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="error-banner">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" id="otpForm" novalidate>
+                    {% csrf_token %}
+                    <div class="otp-boxes" id="otpBoxes">
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
+                    </div>
+                    <input type="hidden" name="otp_code" id="id_otp_code" />
+                    <p class="otp-timer">Code expires in <span id="otpTimer">10:00</span></p>
+
+                    <button type="submit" class="btn-auth" id="verifyBtn">
+                        Verify & Create Account
+                    </button>
+
+                    <div class="resend-section">
+                        <span>Didn't receive the code?</span>
+                        <button type="button" id="resendBtn" class="resend-btn" disabled>
+                            Resend in <span id="resendCountdown">30</span>s
+                        </button>
+                    </div>
+                </form>
+
+                <a href="{% url 'signup' %}" class="back-link">← Back to Sign Up</a>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const boxes = document.querySelectorAll('.otp-box');
+        const hiddenInput = document.getElementById('id_otp_code');
+
+        boxes.forEach((box, i) => {
+            box.addEventListener('input', () => {
+                box.value = box.value.replace(/\D/g, '').slice(0, 1);
+                if (box.value) {
+                    box.classList.add('filled');
+                    if (i < boxes.length - 1) boxes[i + 1].focus();
+                } else {
+                    box.classList.remove('filled');
+                }
+                updateHidden();
+            });
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !box.value && i > 0) {
+                    boxes[i - 1].focus();
+                    boxes[i - 1].value = '';
+                    boxes[i - 1].classList.remove('filled');
+                    updateHidden();
+                }
+            });
+        });
+
+        boxes[0].addEventListener('paste', (e) => {
+            e.preventDefault();
+            const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+            digits.split('').forEach((d, i) => {
+                if (boxes[i]) { boxes[i].value = d; boxes[i].classList.add('filled'); }
+            });
+            if (boxes[Math.min(digits.length, 5)]) boxes[Math.min(digits.length, 5)].focus();
+            updateHidden();
+        });
+
+        function updateHidden() {
+            hiddenInput.value = Array.from(boxes).map(b => b.value).join('');
+        }
+
+        document.getElementById('otpForm').addEventListener('submit', (e) => {
+            updateHidden();
+            if (hiddenInput.value.length < 6) {
+                e.preventDefault();
+                alert('Please enter all 6 digits.');
+                boxes[0].focus();
+            }
+        });
+
+        let totalSeconds = 600;
+        const timerEl = document.getElementById('otpTimer');
+        const verifyBtn = document.getElementById('verifyBtn');
+
+        const expiryTimer = setInterval(() => {
+            totalSeconds--;
+            const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            timerEl.textContent = `${m}:${s}`;
+            if (totalSeconds <= 0) {
+                clearInterval(expiryTimer);
+                timerEl.textContent = 'Expired';
+                timerEl.style.color = '#EF4444';
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = 'OTP Expired';
+                verifyBtn.style.opacity = '0.6';
+            }
+        }, 1000);
+
+        let resendSeconds = 30;
+        const resendBtn = document.getElementById('resendBtn');
+        const resendCountdown = document.getElementById('resendCountdown');
+
+        const resendTimer = setInterval(() => {
+            resendSeconds--;
+            resendCountdown.textContent = resendSeconds;
+            if (resendSeconds <= 0) {
+                clearInterval(resendTimer);
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = 'Resend OTP';
+            }
+        }, 1000);
+
+        resendBtn.addEventListener('click', () => {
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            fetch("{% url 'resend_otp' %}", {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    totalSeconds = 600;
+                    const banner = document.createElement('div');
+                    banner.className = 'error-banner';
+                    banner.style.background = '#D1FAE5';
+                    banner.style.color = '#065F46';
+                    banner.style.borderColor = '#6EE7B7';
+                    banner.textContent = data.message;
+                    document.getElementById('otpForm').prepend(banner);
+                    setTimeout(() => banner.remove(), 4000);
+                } else {
+                    alert(data.message || 'Failed to resend OTP.');
+                }
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend OTP';
+            })
+            .catch(() => {
+                alert('Error resending OTP.');
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend OTP';
+            });
+        });
+
+        if (boxes[0]) boxes[0].focus();
+    </script>
+</body>
+</html>
