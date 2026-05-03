@@ -1,0 +1,101 @@
+{% extends "organizer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'organizer/css/create_service.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-wrap">
+    <div class="stepper">
+        <div class="step-item completed"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">2</div><div class="step-label">Type</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active"><div class="step-circle">3</div><div class="step-label">Resources</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">4</div><div class="step-label">Hours</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">5</div><div class="step-label">Slots</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">6</div><div class="step-label">Config</div></div>
+    </div>
+
+    <section class="create-card">
+        <h2 class="step-title">Manage your resources</h2>
+        <p class="step-subtitle">Add staff members or physical resources for this service</p>
+
+        {% if appointment_type == 'one_to_one' %}
+            <div class="info-box">ℹ️ One-to-one appointments don't require resources. Click Next to continue.</div>
+            <form method="post" class="wizard-form">
+                {% csrf_token %}
+                <div class="step-actions">
+                    <button type="submit" class="btn-outline" form="cancelCreateForm3">Cancel</button>
+                    <div class="step-actions-right">
+                        <a href="{% url 'service_create_step2' %}" class="btn-outline">Back</a>
+                        <button type="submit" class="btn-primary">Next</button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <form method="post" class="wizard-form">
+                {% csrf_token %}
+                <div id="resourceRows" data-require-one="{% if appointment_type == 'resource' %}true{% else %}false{% endif %}">
+                    {% if resources %}
+                        {% for resource in resources %}
+                            <div class="dynamic-row">
+                                <input type="text" name="resource_name" value="{{ resource.name }}" placeholder="Resource Name" data-required="{% if appointment_type == 'resource' %}true{% else %}false{% endif %}">
+                                <select name="assigned_user">
+                                    <option value="">Assign user (optional)</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}" {% if resource.assigned_user_id == user.id|stringformat:'s' %}selected{% endif %}>{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="remove-btn" onclick="removeResourceRow(this)">✕</button>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="dynamic-row">
+                            <input type="text" name="resource_name" placeholder="Resource Name" data-required="{% if appointment_type == 'resource' %}true{% else %}false{% endif %}">
+                            <select name="assigned_user">
+                                <option value="">Assign user (optional)</option>
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="remove-btn" onclick="removeResourceRow(this)">✕</button>
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="button" class="add-row-btn" id="addResourceRow">+ Add Resource</button>
+
+                <template id="resourceRowTemplate">
+                    <div class="dynamic-row">
+                        <input type="text" name="resource_name" placeholder="Resource Name" data-required="{% if appointment_type == 'resource' %}true{% else %}false{% endif %}">
+                        <select name="assigned_user">
+                            <option value="">Assign user (optional)</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="remove-btn" onclick="removeResourceRow(this)">✕</button>
+                    </div>
+                </template>
+
+                <div class="step-actions">
+                    <button type="submit" class="btn-outline" form="cancelCreateForm3">Cancel</button>
+                    <div class="step-actions-right">
+                        <a href="{% url 'service_create_step2' %}" class="btn-outline">Back</a>
+                        <button type="submit" class="btn-primary">Next</button>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+        <form method="post" id="cancelCreateForm3" action="{% url 'service_create_cancel' %}">{% csrf_token %}</form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'organizer/js/create_service.js' %}"></script>
+{% endblock %}

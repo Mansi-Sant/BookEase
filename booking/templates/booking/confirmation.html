@@ -1,0 +1,40 @@
+{% extends "booking/base.html" %}
+
+{% block title %}Confirmed{% endblock %}
+
+{% block content %}
+<div class="confirm-hero">
+  <svg class="checkmark-svg" viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="checkmark-circle" cx="50" cy="50" r="44" transform="rotate(-90 50 50)" />
+    <path class="checkmark-path" d="M28 52 L44 66 L72 36" />
+  </svg>
+  <h1 class="section-title mb-0">Booking confirmed</h1>
+  <p class="text-muted">Your reference (Odoo-style sequence):</p>
+  <div class="ref-box">{{ appointment.reference_code }}</div>
+</div>
+
+<div class="card">
+  <h2 class="section-title" style="font-size:1.1rem;">Summary</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <tbody>
+        <tr><th>Service</th><td>{{ appointment.service.name }}</td></tr>
+        <tr><th>Date</th><td>{{ appointment.timeslot.date|date:"l, F j, Y" }}</td></tr>
+        <tr><th>Time</th><td>{{ appointment.timeslot.start_time|time:"g:i A" }} – {{ appointment.timeslot.end_time|time:"g:i A" }}</td></tr>
+        <tr><th>Duration</th><td>{{ appointment.service.duration_minutes }} minutes</td></tr>
+        {% if appointment.service.price %}
+        <tr><th>Price</th><td>₹{{ appointment.service.price }}</td></tr>
+        {% endif %}
+        <tr><th>Status</th><td><span class="badge badge-yellow">{{ appointment.get_status_display }}</span> <span class="text-muted">(pending → confirmed flow)</span></td></tr>
+        {% if appointment.notes %}
+        <tr><th>Notes</th><td>{{ appointment.notes }}</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1.25rem;">
+    <a class="btn btn-primary" href="{% url 'my_appointments' %}">View My Appointments</a>
+    <a class="btn btn-outline" href="{% url 'book_appointment' %}">Book Another</a>
+  </div>
+</div>
+{% endblock %}

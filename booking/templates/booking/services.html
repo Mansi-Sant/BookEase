@@ -1,0 +1,66 @@
+{% extends "booking/base.html" %}
+
+{% block title %}Services{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Services</h1>
+<p class="text-muted">Every card below is loaded from PostgreSQL via the Django ORM (no mock arrays).</p>
+
+{% for category in categories %}
+<section class="category-block">
+  <h2 class="category-head">
+    <span aria-hidden="true">{{ category.icon_emoji }}</span>
+    {{ category.name }}
+  </h2>
+  <div class="service-row">
+    {% for s in category.services.all %}
+    <article class="card service-offer">
+      <div>
+        <strong>{{ s.name }}</strong>
+        <p class="text-muted mb-0 mt-1" style="font-size:0.92rem;">{{ s.description|truncatewords:24 }}</p>
+        <div class="service-meta">
+          <span class="tag" aria-hidden="true">⏱ {{ s.duration_minutes }} min</span>
+          {% if s.price %}
+          <span class="tag">₹{{ s.price }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        {% if user.is_authenticated %}
+        <a class="btn btn-primary btn-sm" href="{% url 'book_appointment' %}?service={{ s.id }}">Book Now</a>
+        {% else %}
+        <a class="btn btn-primary btn-sm" href="{% url 'login' %}?next=%2Fbook%2F%3Fservice%3D{{ s.id }}">Book Now</a>
+        {% endif %}
+      </div>
+    </article>
+    {% empty %}
+    <p class="text-muted">No active services in this category.</p>
+    {% endfor %}
+  </div>
+</section>
+{% empty %}
+<p class="text-muted">No categories configured.</p>
+{% endfor %}
+{% if is_paginated %}
+<nav aria-label="Page navigation" class="mt-3">
+  <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:1rem 0 0;">
+    {% if categories.has_previous %}
+    <li><a class="btn btn-outline btn-sm" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+    <li><a class="btn btn-outline btn-sm" href="?page={{ categories.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+    {% endif %}
+    {% for num in paginator.page_range %}
+    {% if categories.number == num %}
+    <li><span class="btn btn-outline btn-sm" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+    {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+    <li><a class="btn btn-outline btn-sm" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if categories.has_next %}
+    <li><a class="btn btn-outline btn-sm" href="?page={{ categories.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+    <li><a class="btn btn-outline btn-sm" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+    {% endif %}
+  </ul>
+  <p class="text-muted" style="text-align:center;font-size:0.9rem;margin-top:0.5rem;">Page {{ categories.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records</p>
+</nav>
+{% endif %}
+{% endblock %}

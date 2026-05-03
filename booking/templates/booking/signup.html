@@ -1,0 +1,40 @@
+{% extends "booking/base.html" %}
+
+{% block title %}Sign up{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-brand">
+      <a href="{% url 'home' %}" class="brand">
+        <span class="brand-mark" aria-hidden="true">📅</span>
+        BookEase
+      </a>
+      <p class="text-muted mb-0" style="margin-top:0.5rem;">Create your account</p>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'signup' %}">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="float-field">
+        {{ field }}
+        <label class="float-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.errors %}
+        <div class="field-error">{{ field.errors }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+
+    <p class="text-muted" style="text-align:center;margin-top:1.25rem;">
+      Already have one?
+      <a href="{% url 'login' %}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

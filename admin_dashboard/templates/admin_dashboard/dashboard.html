@@ -1,0 +1,21 @@
+{% extends "admin_dashboard/base.html" %}
+
+{% block title %}Overview{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>BookEase Control Panel</h1>
+        <p style="margin:0;color:var(--muted);font-size:0.95rem;">System overview and live metrics from your database.</p>
+    </div>
+</div>
+
+<section class="stats-grid">
+    <article class="card stat-card"><h3>Total Users</h3><p>{{ stats.total_users }}</p></article>
+    <article class="card stat-card"><h3>Providers</h3><p>{{ stats.organizers }}</p></article>
+    <article class="card stat-card"><h3>Appointments</h3><p>{{ stats.total_bookings }}</p></article>
+    <article class="card stat-card"><h3>Booked Capacity</h3><p>{{ booking_capacity }}</p></article>
+    <article class="card stat-card"><h3>Published Services</h3><p>{{ stats.published_services }}</p></article>
+    <article class="card stat-card"><h3>Resources</h3><p>{{ stats.total_resources }}</p></article>
+</section>
+{% endblock %}

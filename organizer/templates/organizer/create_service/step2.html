@@ -1,0 +1,69 @@
+{% extends "organizer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'organizer/css/create_service.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-wrap">
+    <div class="stepper">
+        <div class="step-item completed"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active"><div class="step-circle">2</div><div class="step-label">Type</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">3</div><div class="step-label">Resources</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">4</div><div class="step-label">Hours</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">5</div><div class="step-label">Slots</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">6</div><div class="step-label">Config</div></div>
+    </div>
+
+    <section class="create-card">
+        <h2 class="step-title">How is this appointment structured?</h2>
+        <p class="step-subtitle">Choose the type that best describes your service</p>
+
+        <form method="post" class="wizard-form">
+            {% csrf_token %}
+            <div class="hidden">
+                {{ form.appointment_type }}
+            </div>
+            <div class="type-cards">
+                <div class="type-card {% if form.appointment_type.value == 'one_to_one' %}selected{% endif %}" data-value="one_to_one">
+                    <span class="type-icon">👤</span>
+                    <h4>One-to-One</h4>
+                    <p>One customer per slot. Perfect for consultations, sessions, and personal services.</p>
+                </div>
+                <div class="type-card {% if form.appointment_type.value == 'group' %}selected{% endif %}" data-value="group">
+                    <span class="type-icon">👥</span>
+                    <h4>Group</h4>
+                    <p>Multiple customers in a single slot. Great for classes, workshops, and tours.</p>
+                </div>
+                <div class="type-card {% if form.appointment_type.value == 'resource' %}selected{% endif %}" data-value="resource">
+                    <span class="type-icon">🔧</span>
+                    <h4>Resource-based</h4>
+                    <p>Each booking is assigned a resource (e.g. room, equipment, staff member).</p>
+                </div>
+            </div>
+            <div id="typeSelectionError" class="field-error-inline"></div>
+
+            <div class="step-actions">
+                <button type="submit" class="btn-outline" form="cancelCreateForm2">Cancel</button>
+                <div class="step-actions-right">
+                    <a href="{% url 'service_create_step1' %}" class="btn-outline">Back</a>
+                    <button type="submit" class="btn-primary">Next</button>
+                </div>
+            </div>
+        </form>
+        <form method="post" id="cancelCreateForm2" action="{% url 'service_create_cancel' %}">
+            {% csrf_token %}
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'organizer/js/create_service.js' %}"></script>
+{% endblock %}

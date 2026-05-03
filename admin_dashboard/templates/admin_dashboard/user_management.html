@@ -1,0 +1,94 @@
+{% extends "admin_dashboard/base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>User &amp; Provider Management</h1>
+    <form method="get" class="inline-form">
+        <select name="role" onchange="this.form.submit()">
+            <option value="">All roles</option>
+            <option value="customer" {% if selected_role == "customer" %}selected{% endif %}>Customers</option>
+            <option value="organizer" {% if selected_role == "organizer" %}selected{% endif %}>Organizers</option>
+            <option value="admin" {% if selected_role == "admin" %}selected{% endif %}>Admins</option>
+        </select>
+    </form>
+</div>
+
+<section class="card">
+    <div class="table-wrap" style="overflow-x:auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">User</th>
+                    <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Email</th>
+                    <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Role</th>
+                    <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Status</th>
+                    <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_obj in users %}
+                <tr>
+                    <td>{{ user_obj.get_full_name|default:user_obj.username }}</td>
+                    <td>{{ user_obj.email }}</td>
+                    <td>
+                        <form method="post" action="{% url 'control_panel_update_user' user_obj.id %}" class="inline-form" style="margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="role">
+                            <select name="role" onchange="this.form.submit()" style="max-width:200px;">
+                                <option value="customer" {% if user_obj.role_profile.role == "customer" %}selected{% endif %}>Customer</option>
+                                <option value="organizer" {% if user_obj.role_profile.role == "organizer" %}selected{% endif %}>Organizer</option>
+                                <option value="admin" {% if user_obj.role_profile.role == "admin" or user_obj.is_superuser %}selected{% endif %}>Admin</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        {% if user_obj.is_active %}
+                        <span style="color:var(--primary);font-weight:600;">Active</span>
+                        {% else %}
+                        <span style="color:var(--danger);font-weight:600;">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'control_panel_update_user' user_obj.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_active">
+                            <button class="btn-outline" type="submit" style="color:var(--primary);border-color:var(--primary);">
+                                {% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="color:var(--muted);">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated_users %}
+    <nav aria-label="Page navigation" style="margin-top:1rem;">
+        <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {% if users.has_previous %}
+            <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+            <li><a class="btn-outline" href="?page={{ users.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in paginator_users.page_range %}
+            {% if users.number == num %}
+            <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+            {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+            <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if users.has_next %}
+            <li><a class="btn-outline" href="?page={{ users.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+            <li><a class="btn-outline" href="?page={{ paginator_users.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+        <p style="text-align:center;color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">
+            Page {{ users.number }} of {{ paginator_users.num_pages }} — {{ paginator_users.count }} total records
+        </p>
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}

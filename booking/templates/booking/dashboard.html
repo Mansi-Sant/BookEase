@@ -1,0 +1,101 @@
+{% extends "booking/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="section-title">{{ greeting }}, {{ user.first_name|default:user.username }}! 👋</h1>
+<p class="text-muted">KPI tiles and rows below are queried from PostgreSQL for your user only.</p>
+
+<div class="stats-row">
+  <div class="stat-card stat-card--blue">
+    <div class="num">{{ stats.total }}</div>
+    <div class="lbl">Total Appointments</div>
+    <span class="ico" aria-hidden="true">📊</span>
+  </div>
+  <div class="stat-card stat-card--teal">
+    <div class="num">{{ stats.upcoming }}</div>
+    <div class="lbl">Upcoming</div>
+    <span class="ico" aria-hidden="true">📅</span>
+  </div>
+  <div class="stat-card stat-card--red">
+    <div class="num">{{ stats.cancelled }}</div>
+    <div class="lbl">Cancelled</div>
+    <span class="ico" aria-hidden="true">✕</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="section-title" style="font-size:1.15rem;">Recent Appointments</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in recent_appointments %}
+        <tr>
+          <td>{{ a.service.name }}</td>
+          <td>{{ a.timeslot.date|date:"M j, Y" }}</td>
+          <td>{{ a.timeslot.start_time|time:"g:i A" }}</td>
+          <td>
+            {% if a.status == 'pending' %}
+            <span class="badge badge-yellow">{{ a.get_status_display }}</span>
+            {% elif a.status == 'confirmed' %}
+            <span class="badge badge-teal">{{ a.get_status_display }}</span>
+            {% elif a.status == 'cancelled' %}
+            <span class="badge badge-red">{{ a.get_status_display }}</span>
+            {% else %}
+            <span class="badge badge-grey">{{ a.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if a.status == 'pending' and a.timeslot.date >= today %}
+            <form method="post" action="{% url 'cancel_appointment' a.id %}" data-confirm-cancel style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+            </form>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-muted">No appointments yet. Book your first one from the sidebar.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" style="margin-top:1rem;">
+      <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+        {% if recent_appointments.has_previous %}
+        <li><a class="btn btn-outline btn-sm" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+        <li><a class="btn btn-outline btn-sm" href="?page={{ recent_appointments.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+        {% endif %}
+        {% for num in paginator.page_range %}
+        {% if recent_appointments.number == num %}
+        <li><span class="btn btn-outline btn-sm" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+        {% elif num > recent_appointments.number|add:'-3' and num < recent_appointments.number|add:'3' %}
+        <li><a class="btn btn-outline btn-sm" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if recent_appointments.has_next %}
+        <li><a class="btn btn-outline btn-sm" href="?page={{ recent_appointments.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+        <li><a class="btn btn-outline btn-sm" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+        {% endif %}
+      </ul>
+      <p class="text-muted" style="text-align:center;font-size:0.9rem;margin-top:0.5rem;">Page {{ recent_appointments.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records</p>
+    </nav>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{% url 'book_appointment' %}" class="fab" title="Book new appointment" aria-label="Book new appointment">+</a>
+{% endblock %}

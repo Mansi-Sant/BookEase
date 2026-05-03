@@ -1,0 +1,75 @@
+{% extends "organizer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'organizer/css/create_service.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-wrap">
+    <div class="stepper">
+        <div class="step-item active"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">2</div><div class="step-label">Type</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">3</div><div class="step-label">Resources</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">4</div><div class="step-label">Hours</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">5</div><div class="step-label">Slots</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">6</div><div class="step-label">Config</div></div>
+    </div>
+
+    <section class="create-card">
+        <h2 class="step-title">Let's start with the basics</h2>
+        <p class="step-subtitle">Give your service a name, description and set how long it takes</p>
+
+        <form method="post" class="wizard-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Service Name</label>
+                <input type="text" name="name" value="{{ form.name.value|default:'' }}" placeholder="e.g. Haircut, Yoga Session, Consultation" data-required="true">
+                <div class="field-error-inline"></div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Describe what customers can expect..." data-required="true">{{ form.description.value|default:'' }}</textarea>
+                <div class="field-error-inline"></div>
+            </div>
+            <div class="form-group">
+                <label>Venue or meeting location</label>
+                <input type="text" name="venue" value="{{ form.venue.value|default:'' }}" placeholder="e.g. Clinic room 2, Studio A, Zoom link shared later">
+            </div>
+            <div class="form-group">
+                <label>Duration</label>
+                <select id="durationSelect" name="duration_minutes" data-required="true">
+                    <option value="15">15 min</option>
+                    <option value="30">30 min</option>
+                    <option value="45">45 min</option>
+                    <option value="60" selected>60 min</option>
+                    <option value="90">90 min</option>
+                    <option value="120">120 min</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="form-group hidden" id="customDurationWrap">
+                <label>Custom minutes</label>
+                <input type="number" id="customDurationInput" name="custom_duration_minutes" min="1">
+            </div>
+
+            <div class="step-actions">
+                <button type="submit" class="btn-outline" form="cancelCreateForm1">Cancel</button>
+                <div class="step-actions-right">
+                    <button type="submit" class="btn-primary">Next</button>
+                </div>
+            </div>
+        </form>
+        <form method="post" id="cancelCreateForm1" action="{% url 'service_create_cancel' %}">{% csrf_token %}</form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'organizer/js/create_service.js' %}"></script>
+{% endblock %}

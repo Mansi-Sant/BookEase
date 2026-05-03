@@ -1,0 +1,72 @@
+{% extends "admin_dashboard/base.html" %}
+
+{% block title %}Bookings{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Bookings</h1>
+</div>
+
+<section class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Source</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Reference code</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">From username · role</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Customer</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Provider</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Service</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Date</th>
+                <th style="font-size:0.75rem;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in bookings %}
+            <tr>
+                <td>
+                    {% if row.kind == "portal" %}
+                    <span title="customer_booking table">Portal</span>
+                    {% else %}
+                    <span title="booking_appointment table">Catalog</span>
+                    {% endif %}
+                </td>
+                <td><code style="font-weight:700;font-size:0.95rem;">{{ row.reference_code }}</code></td>
+                <td style="font-size:0.82rem;color:var(--muted);">{{ row.ref_hint }}</td>
+                <td>{{ row.user_display }}</td>
+                <td>{{ row.provider }}</td>
+                <td>{{ row.service_name }}</td>
+                <td>{{ row.display_date|default:"—" }}</td>
+                <td>{{ row.status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="color:var(--muted);">No bookings yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" style="margin-top:1rem;">
+        <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {% if bookings.has_previous %}
+            <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+            <li><a class="btn-outline" href="?page={{ bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in paginator.page_range %}
+            {% if bookings.number == num %}
+            <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+            {% elif num > bookings.number|add:'-3' and num < bookings.number|add:'3' %}
+            <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if bookings.has_next %}
+            <li><a class="btn-outline" href="?page={{ bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+            <li><a class="btn-outline" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+        <p style="text-align:center;color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">
+            Page {{ bookings.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records
+        </p>
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}

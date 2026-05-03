@@ -1,0 +1,177 @@
+{% extends "booking/base.html" %}
+
+{% block title %}Book{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Book an appointment</h1>
+<p class="text-muted">Services and slots are read from PostgreSQL. Pick a service to refresh available times (Django POST — no fetch API).</p>
+
+<div id="booking-wizard">
+  {# Hidden form: POST select_slots + service → server filters TimeSlot queryset #}
+  <form id="refresh-slots-form" method="post" action="{% url 'book_appointment' %}">
+    {% csrf_token %}
+    <input type="hidden" name="service" id="refresh-service-id" value="{{ selected_service_id|default:'' }}">
+    <input type="hidden" name="select_slots" value="1">
+  </form>
+
+  <form method="post" id="booking-main-form" action="{% url 'book_appointment' %}" novalidate>
+    {% csrf_token %}
+    {# Keep hidden fields outside clipped steps so all browsers always submit service + timeslot on Confirm. #}
+    <div class="visually-hidden" aria-hidden="true">
+      {{ form.service }}
+      {{ form.timeslot }}
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="booking-steps-wrap">
+      <div id="booking-step-1" class="booking-step">
+        <div class="booking-layout">
+          <div>
+            <h2 class="section-title" style="font-size:1.1rem;">Choose a service</h2>
+            <div class="service-pick-grid">
+              {% for s in services_for_booking %}
+              <button
+                type="button"
+                class="service-card {% if selected_service_id == s.id %}is-selected{% endif %}"
+                data-service-id="{{ s.id }}"
+                data-service-name="{{ s.name }}"
+                data-duration="{{ s.duration_minutes }}"
+                data-price="{% if s.price %}{{ s.price }}{% endif %}"
+                data-category-emoji="{{ s.category.icon_emoji }}"
+              >
+                <span class="emoji" aria-hidden="true">{{ s.category.icon_emoji }}</span>
+                <div>
+                  <strong>{{ s.name }}</strong>
+                  <div class="text-muted" style="font-size:0.85rem;">{{ s.duration_minutes }} min{% if s.price %} · ₹{{ s.price }}{% endif %}</div>
+                </div>
+              </button>
+              {% empty %}
+              <p class="text-muted">No services available.</p>
+              {% endfor %}
+            </div>
+            {% if form.service.errors %}
+            <div class="field-error">{{ form.service.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="slot-panel">
+            <h2 class="section-title" style="font-size:1.1rem;">Pick a time</h2>
+            {% if not selected_service_id %}
+            <p class="text-muted">Select a service on the left — we’ll load open slots from the database.</p>
+            {% elif not slot_rows %}
+            <p class="text-muted">No slots scheduled for this service in the next week.</p>
+            {% endif %}
+
+            {% if selected_service_id and calendar_weeks %}
+            <div class="booking-calendar-wrap" aria-label="Availability calendar">
+              <div class="calendar-legend">
+                <span class="calendar-legend-item"><span class="cal-swatch cal-swatch--open"></span> Available date</span>
+                <span class="calendar-legend-item"><span class="cal-swatch cal-swatch--closed"></span> No availability</span>
+              </div>
+              <div class="booking-calendar" role="grid">
+                <div class="cal-week cal-week--head" role="row">
+                  <span class="cal-dow" role="columnheader">Mon</span>
+                  <span class="cal-dow" role="columnheader">Tue</span>
+                  <span class="cal-dow" role="columnheader">Wed</span>
+                  <span class="cal-dow" role="columnheader">Thu</span>
+                  <span class="cal-dow" role="columnheader">Fri</span>
+                  <span class="cal-dow" role="columnheader">Sat</span>
+                  <span class="cal-dow" role="columnheader">Sun</span>
+                </div>
+                {% for week in calendar_weeks %}
+                <div class="cal-week" role="row">
+                  {% for cell in week %}
+                  <div
+                    class="cal-day cal-day--{{ cell.state }}"
+                    role="gridcell"
+                    aria-label="{% if cell.state == 'open' %}Available{% elif cell.state == 'closed' %}No availability{% else %}Past date{% endif %} {{ cell.date }}"
+                    data-date-iso="{{ cell.iso }}"
+                    tabindex="-1"
+                  >
+                    <span class="cal-day-num">{{ cell.day_num }}</span>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if selected_service_id and slot_rows %}
+            <h3 class="slot-panel-sub">Timeslots</h3>
+            <div class="slot-grid" role="list">
+              {% for row in slot_rows %}
+              <button
+                type="button"
+                class="slot-pill {% if row.selectable %}slot-pill--available{% else %}slot-pill--unavailable is-disabled{% endif %}"
+                role="listitem"
+                data-slot-id="{{ row.slot.pk }}"
+                data-date-iso="{{ row.slot.date|date:'Y-m-d' }}"
+                data-date="{{ row.slot.date|date:'D, M j, Y' }}"
+                data-time="{{ row.slot.start_time|time:'g:i A' }}"
+                {% if not row.selectable %}disabled title="{{ row.disabled_label }}"{% endif %}
+              >
+                {{ row.slot.date|date:"M j" }} · {{ row.slot.start_time|time:"g:i A" }}
+              </button>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if form.timeslot.errors %}
+            <div class="field-error">{{ form.timeslot.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <label for="{{ form.notes.id_for_label }}" class="text-muted" style="display:block;margin-top:1rem;font-weight:600;">Notes (optional)</label>
+        {{ form.notes }}
+        {% if form.notes.errors %}
+        <div class="field-error">{{ form.notes.errors }}</div>
+        {% endif %}
+
+        <button type="button" class="btn btn-primary mt-1" id="btn-proceed-booking" style="margin-top:1rem;">
+          Proceed to Confirm →
+        </button>
+      </div>
+
+      <div id="booking-step-2" class="booking-step is-hidden">
+        <div class="card review-card" style="margin-bottom:1rem;">
+          <h2 class="section-title" style="font-size:1.15rem;">Review</h2>
+          <dl>
+            <dt>Service</dt><dd id="summary-service">—</dd>
+            <dt>Date</dt><dd id="summary-date">—</dd>
+            <dt>Time</dt><dd id="summary-time">—</dd>
+            <dt>Duration</dt><dd id="summary-duration">—</dd>
+            <dt>Price</dt><dd id="summary-price">—</dd>
+            <dt>Your notes</dt><dd id="summary-notes">—</dd>
+          </dl>
+        </div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h3 class="mb-0" style="font-size:1rem;color:var(--muted);">Signed in as</h3>
+          <p id="summary-user" class="mb-0" style="font-weight:600;">{{ user.get_full_name|default:user.username }} ({{ user.email|default:user.username }})</p>
+        </div>
+        <a href="#" id="btn-back-booking" class="btn btn-ghost btn-sm" style="margin-bottom:0.75rem;">← Go Back</a>
+        <button type="submit" name="confirm_booking" value="1" class="btn btn-primary btn-block">
+          Confirm Booking ✓
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if form.is_bound and form.errors %}
+<script>
+(function () {
+  var s1 = document.getElementById("booking-step-1");
+  var s2 = document.getElementById("booking-step-2");
+  if (s1 && s2) {
+    s2.classList.add("is-hidden");
+    s1.classList.remove("is-hidden");
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

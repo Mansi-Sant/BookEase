@@ -1,0 +1,41 @@
+{% extends "organizer/base.html" %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Booking Detail</h1>
+    <a class="btn-outline" href="{% url 'all_bookings' %}">Back</a>
+</div>
+
+<section class="card">
+    <p><strong>Customer:</strong> {{ booking.customer.get_full_name|default:booking.customer.username }}</p>
+    <p><strong>Service:</strong> {{ booking.service.name }}</p>
+    <p><strong>Slot:</strong> {{ booking.display_date }} {{ booking.slot.start_time }} - {{ booking.slot.end_time }}</p>
+    <p><strong>Capacity:</strong> {{ booking.party_size }}</p>
+    <p><strong>Resource:</strong> {{ booking.assigned_resource.name|default:"Any available" }}</p>
+    <p><strong>Venue:</strong> {{ booking.service.venue|default:"Shared by organizer" }}</p>
+    <p><strong>Status:</strong> {{ booking.get_status_display }}</p>
+    <p><strong>Notes:</strong> {{ booking.notes|default:"-" }}</p>
+    <p><strong>Booking Answers:</strong></p>
+    {% if answers %}
+        <ul>
+            {% for answer in answers %}
+                <li><strong>{{ answer.question.question_text }}</strong>: {{ answer.answer_text }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Not provided.</p>
+    {% endif %}
+    <div class="actions">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="confirm">
+            <button class="btn-primary" type="submit">Confirm</button>
+        </form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancel">
+            <button class="btn-danger" type="submit">Cancel</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

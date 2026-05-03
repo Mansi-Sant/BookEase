@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}BookEase{% endblock %} · Appointment booking</title>
+  <link rel="stylesheet" href="{% static 'booking/css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% if messages %}
+  <div class="messages" id="flash-messages">
+    {% for message in messages %}
+    <div class="msg {% if message.tags == 'error' %}msg-error{% elif message.tags == 'success' %}msg-success{% else %}msg-info{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <header class="navbar">
+    <div class="navbar-inner">
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="Open menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <a href="{% url 'home' %}" class="brand">
+        <span class="brand-mark" aria-hidden="true">📅</span>
+        BookEase
+      </a>
+
+      <nav class="nav-links" data-nav-links>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'services' %}">Services</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'book_appointment' %}">Book Now</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'my_appointments' %}">My Appointments</a>
+        {% else %}
+        <a href="{% url 'login' %}?next=%2Fbook%2F">Book Now</a>
+        {% endif %}
+      </nav>
+
+      <div class="nav-actions">
+        {% if user.is_authenticated %}
+        <button type="button" class="nav-toggle" data-sidebar-open aria-label="Open sidebar" style="margin-right:0.25rem;">
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+        <details class="nav-user">
+          <summary>{{ user.get_username }}</summary>
+          <div class="nav-user-menu">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'my_appointments' %}">My Appointments</a>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit">Logout</button>
+            </form>
+          </div>
+        </details>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Login</a>
+        <a href="{% url 'signup' %}" class="btn btn-primary btn-sm">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% with url_name=request.resolver_match.url_name %}
+  {% if url_name == 'dashboard' or url_name == 'my_appointments' or url_name == 'book_appointment' or url_name == 'confirmation' %}
+  <div class="layout-with-sidebar">
+    <aside class="sidebar" data-sidebar>
+      <nav>
+        <a href="{% url 'dashboard' %}" class="sidebar-link {% if url_name == 'dashboard' %}is-active{% endif %}">
+          <span class="sidebar-ico" aria-hidden="true">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_appointments' %}" class="sidebar-link {% if url_name == 'my_appointments' %}is-active{% endif %}">
+          <span class="sidebar-ico" aria-hidden="true">📋</span> My Appointments
+        </a>
+        <a href="{% url 'book_appointment' %}" class="sidebar-link {% if url_name == 'book_appointment' %}is-active{% endif %}">
+          <span class="sidebar-ico" aria-hidden="true">➕</span> Book
+        </a>
+        <a href="{% url 'services' %}" class="sidebar-link">
+          <span class="sidebar-ico" aria-hidden="true">🧾</span> Services
+        </a>
+        <a href="{% url 'home' %}" class="sidebar-link">
+          <span class="sidebar-ico" aria-hidden="true">🏠</span> Home
+        </a>
+      </nav>
+    </aside>
+    <div class="layout-main layout-main--wide">
+  {% else %}
+  <main class="layout-main">
+  {% endif %}
+  {% block content %}{% endblock %}
+  {% if url_name == 'dashboard' or url_name == 'my_appointments' or url_name == 'book_appointment' or url_name == 'confirmation' %}
+    </div>
+  </div>
+  {% else %}
+  </main>
+  {% endif %}
+  {% endwith %}
+
+  <footer class="site-footer">
+    BookEase · Odoo-inspired scheduling demo · PostgreSQL-backed · {% now "Y" %}
+  </footer>
+
+  <script src="{% static 'booking/js/main.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

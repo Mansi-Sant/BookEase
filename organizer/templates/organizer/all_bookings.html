@@ -1,0 +1,67 @@
+{% extends "organizer/base.html" %}
+
+{% block content %}
+<div class="page-head">
+    <h1>All Bookings</h1>
+</div>
+
+<section class="card">
+    <form method="get" class="inline-form">
+        <select name="service">
+            <option value="">All Services</option>
+            {% for service in services %}
+                <option value="{{ service.id }}" {% if selected_service == service.id|stringformat:"s" %}selected{% endif %}>{{ service.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="status">
+            <option value="">All Statuses</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn-primary" type="submit">Filter</button>
+        <a class="btn-outline" href="{% url 'all_bookings' %}">Reset</a>
+    </form>
+</section>
+
+<section class="card">
+    <table class="table table-clickable">
+        <thead><tr><th>Customer Name</th><th>Service</th><th>Time</th><th>Capacity</th><th>Status</th></tr></thead>
+        <tbody>
+            {% for booking in bookings %}
+                <tr data-href="{% url 'booking_detail' booking.id %}">
+                    <td>{{ booking.customer.get_full_name|default:booking.customer.username }}</td>
+                    <td>{{ booking.service.name }}</td>
+                    <td>{{ booking.display_date }} {{ booking.slot.start_time }}</td>
+                    <td>{{ booking.party_size }}</td>
+                    <td>{{ booking.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No bookings found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" style="margin-top:1rem;">
+        <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {% if bookings.has_previous %}
+            <li><a class="btn-outline" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+            <li><a class="btn-outline" href="?page={{ bookings.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in paginator.page_range %}
+            {% if bookings.number == num %}
+            <li><span class="btn-outline" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+            {% elif num > bookings.number|add:'-3' and num < bookings.number|add:'3' %}
+            <li><a class="btn-outline" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if bookings.has_next %}
+            <li><a class="btn-outline" href="?page={{ bookings.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+            <li><a class="btn-outline" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+        <p style="text-align:center;opacity:0.75;font-size:0.85rem;margin-top:0.5rem;">Page {{ bookings.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records</p>
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}

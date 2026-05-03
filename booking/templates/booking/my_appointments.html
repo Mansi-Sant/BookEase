@@ -1,0 +1,92 @@
+{% extends "booking/base.html" %}
+
+{% block title %}My Appointments{% endblock %}
+
+{% block content %}
+<h1 class="section-title">My Appointments</h1>
+<p class="text-muted">Filtered list is always loaded from the database (no static JSON).</p>
+
+<form method="get" class="filter-bar">
+  <label>
+    Status
+    {{ filter_form.status }}
+  </label>
+  <label>
+    From
+    {{ filter_form.date_from }}
+  </label>
+  <label>
+    To
+    {{ filter_form.date_to }}
+  </label>
+  <button type="submit" class="btn btn-primary btn-sm">Apply filters</button>
+</form>
+
+{% if appointments %}
+<div class="appt-list">
+  {% for a in appointments %}
+  <article class="card appt-card {% if a.status == 'cancelled' %}is-cancelled{% endif %}">
+    <div>
+      <div class="appt-title" style="font-family:ui-monospace,monospace;font-weight:700;color:var(--primary);">
+        {{ a.reference_code }}
+      </div>
+      <div class="appt-meta" style="font-weight:600;">{{ a.service.name }}</div>
+      <div class="text-muted" style="font-size:0.9rem;">
+        {{ a.timeslot.date|date:"D, M j, Y" }} · {{ a.timeslot.start_time|time:"g:i A" }}
+      </div>
+      <div class="mt-1">
+        {% if a.status == 'pending' %}
+        <span class="badge badge-yellow">{{ a.get_status_display }}</span>
+        {% elif a.status == 'confirmed' %}
+        <span class="badge badge-teal">{{ a.get_status_display }}</span>
+        {% elif a.status == 'cancelled' %}
+        <span class="badge badge-red">{{ a.get_status_display }}</span>
+        {% else %}
+        <span class="badge badge-grey">{{ a.get_status_display }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div>
+      {% if a.status == 'pending' and a.timeslot.date >= today %}
+      <form method="post" action="{% url 'cancel_appointment' a.id %}" data-confirm-cancel>
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline btn-sm" style="border-color:var(--danger);color:var(--danger);">Cancel</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% if is_paginated %}
+<nav aria-label="Page navigation" style="margin-top:1rem;">
+  <ul style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;list-style:none;padding:0;margin:0;">
+    {% if appointments.has_previous %}
+    <li><a class="btn btn-outline btn-sm" href="?page=1{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">&laquo; First</a></li>
+    <li><a class="btn btn-outline btn-sm" href="?page={{ appointments.previous_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Previous</a></li>
+    {% endif %}
+    {% for num in paginator.page_range %}
+    {% if appointments.number == num %}
+    <li><span class="btn btn-outline btn-sm" style="pointer-events:none;opacity:0.85;">{{ num }}</span></li>
+    {% elif num > appointments.number|add:'-3' and num < appointments.number|add:'3' %}
+    <li><a class="btn btn-outline btn-sm" href="?page={{ num }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">{{ num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if appointments.has_next %}
+    <li><a class="btn btn-outline btn-sm" href="?page={{ appointments.next_page_number }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Next</a></li>
+    <li><a class="btn btn-outline btn-sm" href="?page={{ paginator.num_pages }}{% if pagination_querystring %}&{{ pagination_querystring }}{% endif %}">Last &raquo;</a></li>
+    {% endif %}
+  </ul>
+  <p class="text-muted" style="text-align:center;font-size:0.9rem;margin-top:0.5rem;">Page {{ appointments.number }} of {{ paginator.num_pages }} — {{ paginator.count }} total records</p>
+</nav>
+{% endif %}
+{% else %}
+<div class="card empty-state">
+  <div class="empty-art" aria-hidden="true">
+    <div class="c c1"></div>
+    <div class="c c2"></div>
+  </div>
+  <p style="font-size:1.1rem;font-weight:600;">No appointments yet. Book your first one!</p>
+  <a class="btn btn-primary" href="{% url 'book_appointment' %}">Book Now</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizer Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'organizer/css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="topbar">
+        <button class="mobile-toggle" id="sidebarToggle" type="button">☰</button>
+        <a class="brand" href="{% url 'organizer_dashboard' %}">OrganizerHub</a>
+        <nav class="top-nav">
+            <a href="{% url 'organizer_dashboard' %}">Dashboard</a>
+            <a href="{% url 'service_list' %}">Services</a>
+            <a href="{% url 'all_bookings' %}">Bookings</a>
+        </nav>
+        <form method="post" action="/accounts/logout/">
+            {% csrf_token %}
+            <button class="btn-outline" type="submit">Logout</button>
+        </form>
+    </header>
+
+    <div class="panel-layout">
+        <aside class="sidebar" id="sidebar">
+            <a href="{% url 'organizer_dashboard' %}">Overview</a>
+            <a href="{% url 'service_create' %}">Create Service</a>
+            <a href="{% url 'service_list' %}">Manage Services</a>
+            <a href="{% url 'all_bookings' %}">All Bookings</a>
+        </aside>
+        <main class="content">
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for message in messages %}
+                        <div class="flash {% if message.tags == 'success' %}flash-success{% else %}flash-error{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script src="{% static 'organizer/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

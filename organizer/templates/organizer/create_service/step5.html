@@ -1,0 +1,123 @@
+{% extends "organizer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'organizer/css/create_service.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-wrap">
+    <div class="stepper">
+        <div class="step-item completed"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">2</div><div class="step-label">Type</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">3</div><div class="step-label">Resources</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">4</div><div class="step-label">Hours</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active"><div class="step-circle">5</div><div class="step-label">Slots</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">6</div><div class="step-label">Config</div></div>
+    </div>
+
+    <section class="create-card">
+        <h2 class="step-title">Set your appointment slots</h2>
+        <p class="step-subtitle">Define when bookings can be made</p>
+
+        <form method="post" class="wizard-form">
+            {% csrf_token %}
+            <input type="hidden" id="scheduleMode" name="schedule_mode" value="{{ schedule_mode|default:'weekly' }}">
+
+            <div class="pill-tabs">
+                <button type="button" class="pill-tab" id="weeklyTab">📅 Weekly Schedule</button>
+                <button type="button" class="pill-tab" id="flexibleTab">🗓 Flexible Slots</button>
+            </div>
+
+            <div id="weeklyWrap">
+                <div id="weeklyRows">
+                    {% for slot in weekly_slots %}
+                        <div class="dynamic-row">
+                            <select name="weekly_day">
+                                <option value="0" {% if slot.day_of_week == "0" %}selected{% endif %}>Monday</option>
+                                <option value="1" {% if slot.day_of_week == "1" %}selected{% endif %}>Tuesday</option>
+                                <option value="2" {% if slot.day_of_week == "2" %}selected{% endif %}>Wednesday</option>
+                                <option value="3" {% if slot.day_of_week == "3" %}selected{% endif %}>Thursday</option>
+                                <option value="4" {% if slot.day_of_week == "4" %}selected{% endif %}>Friday</option>
+                                <option value="5" {% if slot.day_of_week == "5" %}selected{% endif %}>Saturday</option>
+                                <option value="6" {% if slot.day_of_week == "6" %}selected{% endif %}>Sunday</option>
+                            </select>
+                            <input type="time" name="weekly_start_time" value="{{ slot.start_time }}">
+                            <input type="time" name="weekly_end_time" value="{{ slot.end_time }}">
+                            <input type="number" name="weekly_max_bookings" value="{{ slot.max_bookings|default:1 }}" min="1">
+                            <button type="button" class="remove-btn" onclick="removeSlotRow(this)">✕</button>
+                        </div>
+                    {% empty %}
+                        <div class="dynamic-row">
+                            <select name="weekly_day">
+                                <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option>
+                                <option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
+                            </select>
+                            <input type="time" name="weekly_start_time">
+                            <input type="time" name="weekly_end_time">
+                            <input type="number" name="weekly_max_bookings" value="1" min="1">
+                            <button type="button" class="remove-btn" onclick="removeSlotRow(this)">✕</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="add-row-btn" onclick="addSlotRow('weekly')">+ Add Slot</button>
+            </div>
+
+            <div id="flexibleWrap" class="hidden">
+                <div id="flexRows">
+                    {% for slot in flexible_slots %}
+                        <div class="dynamic-row">
+                            <input type="date" name="flex_date" value="{{ slot.date }}">
+                            <input type="time" name="flex_start_time" value="{{ slot.start_time }}">
+                            <input type="time" name="flex_end_time" value="{{ slot.end_time }}">
+                            <input type="number" name="flex_max_bookings" value="{{ slot.max_bookings|default:1 }}" min="1">
+                            <button type="button" class="remove-btn" onclick="removeSlotRow(this)">✕</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="add-row-btn" onclick="addSlotRow('flexible')">+ Add Slot</button>
+            </div>
+
+            <template id="weeklySlotRowTemplate">
+                <div class="dynamic-row">
+                    <select name="weekly_day">
+                        <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option>
+                        <option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
+                    </select>
+                    <input type="time" name="weekly_start_time">
+                    <input type="time" name="weekly_end_time">
+                    <input type="number" name="weekly_max_bookings" value="1" min="1">
+                    <button type="button" class="remove-btn" onclick="removeSlotRow(this)">✕</button>
+                </div>
+            </template>
+            <template id="flexSlotRowTemplate">
+                <div class="dynamic-row">
+                    <input type="date" name="flex_date">
+                    <input type="time" name="flex_start_time">
+                    <input type="time" name="flex_end_time">
+                    <input type="number" name="flex_max_bookings" value="1" min="1">
+                    <button type="button" class="remove-btn" onclick="removeSlotRow(this)">✕</button>
+                </div>
+            </template>
+
+            <div class="step-actions">
+                <button type="submit" class="btn-outline" form="cancelCreateForm5">Cancel</button>
+                <div class="step-actions-right">
+                    <a href="{% url 'service_create_step4' %}" class="btn-outline">Back</a>
+                    <button type="submit" class="btn-primary">Next</button>
+                </div>
+            </div>
+        </form>
+        <form method="post" id="cancelCreateForm5" action="{% url 'service_create_cancel' %}">{% csrf_token %}</form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'organizer/js/create_service.js' %}"></script>
+{% endblock %}

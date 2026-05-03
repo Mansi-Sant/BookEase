@@ -1,0 +1,57 @@
+{% extends "organizer/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'organizer/css/create_service.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-wrap">
+    <div class="stepper">
+        <div class="step-item completed"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">2</div><div class="step-label">Type</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed"><div class="step-circle">3</div><div class="step-label">Resources</div></div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active"><div class="step-circle">4</div><div class="step-label">Hours</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">5</div><div class="step-label">Slots</div></div>
+        <div class="step-connector"></div>
+        <div class="step-item"><div class="step-circle">6</div><div class="step-label">Config</div></div>
+    </div>
+
+    <section class="create-card">
+        <h2 class="step-title">When are you available?</h2>
+        <p class="step-subtitle">Set the working hours for each day of the week</p>
+
+        <form method="post" class="wizard-form">
+            {% csrf_token %}
+            <label><input type="checkbox" id="applyAllDays"> Apply to all days</label>
+            <table class="hours-table">
+                {% for row in day_rows %}
+                    <tr class="hours-row {% if not row.enabled %}disabled{% endif %}">
+                        <td><label><input type="checkbox" class="day-enable" name="enabled_{{ row.index }}" {% if row.enabled %}checked{% endif %}> {{ row.label }}</label></td>
+                        <td><input type="time" class="time-input" name="start_time_{{ row.index }}" value="{{ row.start_time }}"></td>
+                        <td>to</td>
+                        <td><input type="time" class="time-input" name="end_time_{{ row.index }}" value="{{ row.end_time }}"></td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <div class="step-actions">
+                <button type="submit" class="btn-outline" form="cancelCreateForm4">Cancel</button>
+                <div class="step-actions-right">
+                    <a href="{% url 'service_create_step3' %}" class="btn-outline">Back</a>
+                    <button type="submit" class="btn-primary">Next</button>
+                </div>
+            </div>
+        </form>
+        <form method="post" id="cancelCreateForm4" action="{% url 'service_create_cancel' %}">{% csrf_token %}</form>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'organizer/js/create_service.js' %}"></script>
+{% endblock %}
